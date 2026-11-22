@@ -20,17 +20,21 @@ if errorlevel 1 (
 )
 
 echo [1/3] Instalacja zaleznosci npm...
-call npm install
+call npm install --legacy-peer-deps
+if errorlevel 1 exit /b 1
+
+call npm install --no-save --legacy-peer-deps @tauri-apps/cli@2
 if errorlevel 1 exit /b 1
 
 echo [2/3] Generowanie ikony SHL PRO (.ico)...
-call npx --yes @tauri-apps/cli@^2 icon public\assets\aistudio\Metaliczny_znak_marki_SHL_PRO_cf0c8d3e.png
+call npx tauri icon -o src-tauri\icons public\assets\aistudio\Metaliczny_znak_marki_SHL_PRO_cf0c8d3e.png
 if errorlevel 1 exit /b 1
 
-node -e "const fs=require('fs');const p='src-tauri/tauri.conf.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));c.bundle.icon=['icons/32x32.png','icons/128x128.png','icons/128x128@2x.png','icons/icon.icns','icons/icon.ico'];fs.writeFileSync(p,JSON.stringify(c,null,2));"
+call node scripts\prepare-tauri-icons.mjs
+if errorlevel 1 exit /b 1
 
 echo [3/3] Kompilacja instalatora .exe (NSIS) oraz .msi...
-call npx --yes @tauri-apps/cli@^2 build
+call npx tauri build
 if errorlevel 1 exit /b 1
 
 echo.

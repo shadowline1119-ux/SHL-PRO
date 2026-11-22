@@ -114,9 +114,10 @@ fn atomic_write(target: &Path, bytes: &[u8]) -> Result<(), String> {
 #[cfg(target_os = "windows")]
 fn restrict_to_current_user(path: &Path) {
     if let Ok(user) = std::env::var("USERNAME") {
-        let p = path.to_string_lossy().to_string();
+        let p = path.to_string_lossy().into_owned();
+        let grant = format!("{user}:(OI)(CI)F");
         let _ = Command::new("icacls")
-            .args([&p, "/inheritance:r", "/grant:r", &format!("{user}:(OI)(CI)F")])
+            .args([p.as_str(), "/inheritance:r", "/grant:r", grant.as_str()])
             .output();
     }
 }

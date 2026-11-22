@@ -10,7 +10,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-windows:
@@ -28,39 +28,27 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache zależności Rust (Cargo)
-        uses: actions/cache@v4
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', 'src-tauri/Cargo.toml') }}
+          workspaces: src-tauri
 
-      - name: Zainstaluj zależności npm
-        run: npm install
+      - name: Zainstaluj zależności npm (z --legacy-peer-deps)
+        run: npm install --legacy-peer-deps
+
+      - name: Sprawdź typy TypeScript (tsc --noEmit)
+        run: npm run lint
+
+      - name: Zainstaluj Tauri CLI v2
+        run: npm install --no-save --legacy-peer-deps @tauri-apps/cli@2
 
       - name: Wygeneruj ikony Windows (.ico) z logo SHL PRO
-        shell: pwsh
-        run: |
-          npx --yes @tauri-apps/cli@^2 icon public/assets/aistudio/Metaliczny_znak_marki_SHL_PRO_cf0c8d3e.png
-          node -e "
-            const fs = require('fs');
-            const p = 'src-tauri/tauri.conf.json';
-            const cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
-            cfg.bundle.icon = [
-              'icons/32x32.png',
-              'icons/128x128.png',
-              'icons/128x128@2x.png',
-              'icons/icon.icns',
-              'icons/icon.ico'
-            ];
-            fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
-          "
+        run: npx tauri icon -o src-tauri/icons public/assets/aistudio/Metaliczny_znak_marki_SHL_PRO_cf0c8d3e.png
+
+      - name: Skonfiguruj ikony w tauri.conf.json
+        run: node scripts/prepare-tauri-icons.mjs
 
       - name: Zbuduj instalator Windows (.exe / .msi)
-        run: npx --yes @tauri-apps/cli@^2 build
+        run: npx tauri build
 
       - name: Wyślij gotowy instalator SHL PRO jako plik do pobrania
         uses: actions/upload-artifact@v4
