@@ -1,0 +1,23 @@
+[package]
+name = "shadow-line-kosztorys"
+version = "1.0.0"
+description = "SHL PRO — samodzielny program do kosztorysowania robót budowlanych z lokalną bazą SQLite i zapisem w folderze SHL BASE."
+authors = ["SHL PRO"]
+edition = "2021"
+
+[lib]
+name = "shadow_line_kosztorys_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+directories = "5"
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { version = "0.32", features = ["bundled"] }

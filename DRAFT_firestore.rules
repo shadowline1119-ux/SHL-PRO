@@ -1,0 +1,342 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isStr(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidEstimateSettingsMap(cfg) {
+      return cfg is map &&
+        cfg.keys().hasAll(['sourceId', 'subregionId', 'indirectCostsPct', 'profitPct', 'vatRate', 'discountPct']) &&
+        cfg.keys().hasOnly(['sourceId', 'subregionId', 'indirectCostsPct', 'profitPct', 'vatRate', 'discountPct']) &&
+        isStr(cfg.sourceId, 2, 40) &&
+        isStr(cfg.subregionId, 2, 40) &&
+        cfg.indirectCostsPct is number && cfg.indirectCostsPct >= 0 && cfg.indirectCostsPct <= 100 &&
+        cfg.profitPct is number && cfg.profitPct >= 0 && cfg.profitPct <= 100 &&
+        (cfg.vatRate == 8 || cfg.vatRate == 23) &&
+        cfg.discountPct is number && cfg.discountPct >= 0 && cfg.discountPct <= 60;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'activeDocumentsLabel', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'activeDocumentsLabel', 'createdAt', 'updatedAt']) &&
+        isValidId(data.uid) &&
+        data.uid == userId &&
+        data.uid == request.auth.uid &&
+        isStr(data.email, 3, 254) &&
+        isStr(data.displayName, 0, 120) &&
+        isStr(data.activeDocumentsLabel, 0, 260) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEstimateProject(data, userId, estimateId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'projectKey', 'name', 'versionNumber', 'versionTag',
+          'versionNote', 'clientName', 'location', 'itemCount', 'netTotal',
+          'revision', 'clientUpdatedAt', 'deleted', 'settings',
+          'structureParams', 'offer', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'projectKey', 'name', 'versionNumber', 'versionTag',
+          'versionNote', 'clientName', 'location', 'itemCount', 'netTotal',
+          'revision', 'clientUpdatedAt', 'deleted', 'settings',
+          'structureParams', 'offer', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.id == estimateId &&
+        isValidId(data.ownerId) &&
+        data.ownerId == userId &&
+        data.ownerId == request.auth.uid &&
+        isStr(data.projectKey, 1, 160) &&
+        isStr(data.name, 1, 240) &&
+        data.versionNumber is int && data.versionNumber >= 1 && data.versionNumber <= 100000 &&
+        isStr(data.versionTag, 1, 80) &&
+        isStr(data.versionNote, 0, 1000) &&
+        isStr(data.clientName, 0, 240) &&
+        isStr(data.location, 0, 240) &&
+        data.itemCount is int && data.itemCount >= 0 && data.itemCount <= 5000 &&
+        data.netTotal is number && data.netTotal >= 0 &&
+        data.revision is int && data.revision >= 1 &&
+        isStr(data.clientUpdatedAt, 10, 64) &&
+        data.deleted is bool &&
+        isValidEstimateSettingsMap(data.settings) &&
+        data.structureParams is map && data.structureParams.keys().size() <= 30 &&
+        data.offer is map && data.offer.keys().size() <= 30 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidEstimateLineItem(data, userId, estimateId, itemId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'estimateId', 'orderIndex', 'catalogId', 'knr',
+          'name', 'category', 'unit', 'quantity', 'rateLabor', 'rateMaterials',
+          'rateEquipment', 'bdoCode', 'notes', 'isCustom', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'estimateId', 'orderIndex', 'catalogId', 'knr',
+          'name', 'category', 'unit', 'quantity', 'rateLabor', 'rateMaterials',
+          'rateEquipment', 'bdoCode', 'notes', 'isCustom', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.id == itemId &&
+        isValidId(data.ownerId) &&
+        data.ownerId == userId &&
+        data.ownerId == request.auth.uid &&
+        isValidId(data.estimateId) &&
+        data.estimateId == estimateId &&
+        data.orderIndex is int && data.orderIndex >= 0 && data.orderIndex <= 5000 &&
+        isStr(data.catalogId, 0, 128) &&
+        isStr(data.knr, 1, 80) &&
+        isStr(data.name, 1, 500) &&
+        isStr(data.category, 1, 64) &&
+        isStr(data.unit, 1, 16) &&
+        data.quantity is number && data.quantity >= 0 &&
+        data.rateLabor is number && data.rateLabor >= 0 &&
+        data.rateMaterials is number && data.rateMaterials >= 0 &&
+        data.rateEquipment is number && data.rateEquipment >= 0 &&
+        isStr(data.bdoCode, 0, 32) &&
+        isStr(data.notes, 0, 500) &&
+        data.isCustom is bool &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCustomRateRecord(data, userId, listId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'recordType', 'title', 'revision',
+          'clientUpdatedAt', 'deleted', 'data', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'recordType', 'title', 'revision',
+          'clientUpdatedAt', 'deleted', 'data', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.id == listId &&
+        isValidId(data.ownerId) &&
+        data.ownerId == userId &&
+        data.ownerId == request.auth.uid &&
+        data.recordType in ['price_source', 'subregion', 'work_catalog', 'quarry_material'] &&
+        isStr(data.title, 1, 240) &&
+        data.revision is int && data.revision >= 1 &&
+        isStr(data.clientUpdatedAt, 10, 64) &&
+        data.deleted is bool &&
+        data.data is map && data.data.keys().size() <= 40 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserSettingsDoc(data, userId, settingId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'companyName', 'companyNip', 'companyAddress',
+          'companyPhone', 'companyEmail', 'estimateDefaults',
+          'revision', 'clientUpdatedAt', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'companyName', 'companyNip', 'companyAddress',
+          'companyPhone', 'companyEmail', 'estimateDefaults',
+          'revision', 'clientUpdatedAt', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.id == settingId &&
+        isValidId(data.ownerId) &&
+        data.ownerId == userId &&
+        data.ownerId == request.auth.uid &&
+        isStr(data.companyName, 0, 200) &&
+        isStr(data.companyNip, 0, 32) &&
+        isStr(data.companyAddress, 0, 240) &&
+        isStr(data.companyPhone, 0, 64) &&
+        isStr(data.companyEmail, 0, 254) &&
+        isValidEstimateSettingsMap(data.estimateDefaults) &&
+        data.revision is int && data.revision >= 1 &&
+        isStr(data.clientUpdatedAt, 10, 64) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidChangeHistoryEntry(data, userId, entryId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'entityType', 'entityId', 'action', 'summary', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'entityType', 'entityId', 'action', 'summary', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.id == entryId &&
+        isValidId(data.ownerId) &&
+        data.ownerId == userId &&
+        data.ownerId == request.auth.uid &&
+        data.entityType in ['estimate', 'price_list', 'settings', 'backup', 'sync'] &&
+        isStr(data.entityId, 1, 128) &&
+        isStr(data.action, 1, 64) &&
+        isStr(data.summary, 1, 500) &&
+        data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'activeDocumentsLabel', 'updatedAt']);
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      match /estimates/{estimateId} {
+        allow get: if isValidId(userId) && isValidId(estimateId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(estimateId) &&
+          isOwner(userId) &&
+          isValidEstimateProject(incoming(), userId, estimateId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(estimateId) &&
+          isOwner(userId) &&
+          isValidEstimateProject(incoming(), userId, estimateId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().id == existing().id &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time && (
+            // Action: Sync / Update estimate contents & version
+            (incoming().deleted == false &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'projectKey', 'name', 'versionNumber', 'versionTag', 'versionNote',
+                'clientName', 'location', 'itemCount', 'netTotal', 'revision',
+                'clientUpdatedAt', 'deleted', 'settings', 'structureParams',
+                'offer', 'updatedAt'
+              ])) ||
+            // Action: Soft-delete / tombstone sync
+            (incoming().deleted == true &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'deleted', 'revision', 'clientUpdatedAt', 'updatedAt'
+              ]))
+          );
+        allow delete: if isValidId(userId) && isValidId(estimateId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+
+        match /items/{itemId} {
+          allow get: if isValidId(userId) && isValidId(estimateId) && isValidId(itemId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+          allow list: if isValidId(userId) && isValidId(estimateId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(userId) && isValidId(estimateId) && isValidId(itemId) &&
+            isOwner(userId) &&
+            isValidEstimateLineItem(incoming(), userId, estimateId, itemId) &&
+            incoming().createdAt == request.time &&
+            incoming().updatedAt == request.time &&
+            existsAfter(/databases/$(database)/documents/users/$(userId)/estimates/$(estimateId)) &&
+            getAfter(/databases/$(database)/documents/users/$(userId)/estimates/$(estimateId)).data.ownerId == request.auth.uid;
+          allow update: if isValidId(userId) && isValidId(estimateId) && isValidId(itemId) &&
+            isOwner(userId) &&
+            isValidEstimateLineItem(incoming(), userId, estimateId, itemId) &&
+            existing().ownerId == request.auth.uid &&
+            incoming().id == existing().id &&
+            incoming().ownerId == existing().ownerId &&
+            incoming().estimateId == existing().estimateId &&
+            incoming().createdAt == existing().createdAt &&
+            incoming().updatedAt == request.time &&
+            exists(/databases/$(database)/documents/users/$(userId)/estimates/$(estimateId)) &&
+            get(/databases/$(database)/documents/users/$(userId)/estimates/$(estimateId)).data.ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'orderIndex', 'catalogId', 'knr', 'name', 'category', 'unit',
+              'quantity', 'rateLabor', 'rateMaterials', 'rateEquipment',
+              'bdoCode', 'notes', 'isCustom', 'updatedAt'
+            ]);
+          allow delete: if isValidId(userId) && isValidId(estimateId) && isValidId(itemId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        }
+      }
+
+      match /priceLists/{listId} {
+        allow get: if isValidId(userId) && isValidId(listId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(listId) &&
+          isOwner(userId) &&
+          isValidCustomRateRecord(incoming(), userId, listId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(listId) &&
+          isOwner(userId) &&
+          isValidCustomRateRecord(incoming(), userId, listId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().id == existing().id &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'recordType', 'title', 'revision', 'clientUpdatedAt', 'deleted', 'data', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(listId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+      }
+
+      match /settings/{settingId} {
+        allow get: if isValidId(userId) && isValidId(settingId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(settingId) &&
+          isOwner(userId) &&
+          isValidUserSettingsDoc(incoming(), userId, settingId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(settingId) &&
+          isOwner(userId) &&
+          isValidUserSettingsDoc(incoming(), userId, settingId) &&
+          existing().ownerId == request.auth.uid &&
+          incoming().id == existing().id &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'companyName', 'companyNip', 'companyAddress', 'companyPhone',
+            'companyEmail', 'estimateDefaults', 'revision', 'clientUpdatedAt', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(settingId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+      }
+
+      match /changeHistory/{entryId} {
+        allow get: if isValidId(userId) && isValidId(entryId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow list: if isValidId(userId) && isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(entryId) &&
+          isOwner(userId) &&
+          isValidChangeHistoryEntry(incoming(), userId, entryId) &&
+          incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+  }
+}

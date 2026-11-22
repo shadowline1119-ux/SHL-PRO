@@ -1,0 +1,463 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user cloud workspace profile metadata (PII isolated to owner only).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "activeDocumentsLabel": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 260
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "displayName", "createdAt", "updatedAt"]
+    },
+    "EstimateProject": {
+      "title": "EstimateProject",
+      "description": "Synced estimate project snapshot stored in the owner cloud namespace without unbounded arrays.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "projectKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "versionNumber": {
+          "type": "integer"
+        },
+        "versionTag": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "versionNote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 240
+        },
+        "location": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 240
+        },
+        "itemCount": {
+          "type": "integer"
+        },
+        "netTotal": {
+          "type": "number"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "clientUpdatedAt": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "settings": {
+          "type": "object"
+        },
+        "structureParams": {
+          "type": "object"
+        },
+        "offer": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "projectKey",
+        "name",
+        "versionNumber",
+        "versionTag",
+        "versionNote",
+        "clientName",
+        "location",
+        "itemCount",
+        "netTotal",
+        "revision",
+        "clientUpdatedAt",
+        "deleted",
+        "settings",
+        "structureParams",
+        "offer",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EstimateLineItemRecord": {
+      "title": "EstimateLineItemRecord",
+      "description": "Single line item inside an estimate project subcollection.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "estimateId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "orderIndex": {
+          "type": "integer"
+        },
+        "catalogId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "knr": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "rateLabor": {
+          "type": "number"
+        },
+        "rateMaterials": {
+          "type": "number"
+        },
+        "rateEquipment": {
+          "type": "number"
+        },
+        "bdoCode": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 32
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500
+        },
+        "isCustom": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "estimateId",
+        "orderIndex",
+        "catalogId",
+        "knr",
+        "name",
+        "category",
+        "unit",
+        "quantity",
+        "rateLabor",
+        "rateMaterials",
+        "rateEquipment",
+        "bdoCode",
+        "notes",
+        "isCustom",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CustomRateRecord": {
+      "title": "CustomRateRecord",
+      "description": "Custom or modified labor/material/equipment/quarry/source rate entry synced per user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "recordType": {
+          "type": "string",
+          "enum": ["price_source", "subregion", "work_catalog", "quarry_material"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "clientUpdatedAt": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "data": {
+          "type": "object"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "recordType",
+        "title",
+        "revision",
+        "clientUpdatedAt",
+        "deleted",
+        "data",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserSettingsDoc": {
+      "title": "UserSettingsDoc",
+      "description": "User company profile and non-secret application preferences.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "companyNip": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 32
+        },
+        "companyAddress": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 240
+        },
+        "companyPhone": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 64
+        },
+        "companyEmail": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 254
+        },
+        "estimateDefaults": {
+          "type": "object"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "clientUpdatedAt": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "companyName",
+        "companyNip",
+        "companyAddress",
+        "companyPhone",
+        "companyEmail",
+        "estimateDefaults",
+        "revision",
+        "clientUpdatedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ChangeHistoryEntry": {
+      "title": "ChangeHistoryEntry",
+      "description": "Immutable audit log entry tracking synced estimate/rate modifications.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "entityType": {
+          "type": "string",
+          "enum": ["estimate", "price_list", "settings", "backup", "sync"]
+        },
+        "entityId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "entityType", "entityId", "action", "summary", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user workspace root and PII profile; readable/writable only by verified owner."
+    },
+    "/users/{userId}/estimates/{estimateId}": {
+      "schema": { "$ref": "#/entities/EstimateProject" },
+      "description": "User-owned cost estimates and versioned snapshots."
+    },
+    "/users/{userId}/estimates/{estimateId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/EstimateLineItemRecord" },
+      "description": "Line items belonging to a specific estimate snapshot (relational subcollection)."
+    },
+    "/users/{userId}/priceLists/{listId}": {
+      "schema": { "$ref": "#/entities/CustomRateRecord" },
+      "description": "Custom or edited KNR rates, quarry material prices, labor indices, and subregions."
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/UserSettingsDoc" },
+      "description": "Synced company details (Dane firmy) and non-secret workspace defaults."
+    },
+    "/users/{userId}/changeHistory/{entryId}": {
+      "schema": { "$ref": "#/entities/ChangeHistoryEntry" },
+      "description": "Immutable change history log for user workspace synchronization."
+    }
+  }
+}

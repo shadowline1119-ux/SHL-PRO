@@ -1,0 +1,73 @@
+name: Build Windows Installer (SHL PRO)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Pobierz kod projektu
+        uses: actions/checkout@v4
+
+      - name: Skonfiguruj Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Skonfiguruj Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache zależności Rust (Cargo)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', 'src-tauri/Cargo.toml') }}
+
+      - name: Zainstaluj zależności npm
+        run: npm install
+
+      - name: Wygeneruj ikony Windows (.ico) z logo SHL PRO
+        shell: pwsh
+        run: |
+          npx --yes @tauri-apps/cli@^2 icon public/assets/aistudio/Metaliczny_znak_marki_SHL_PRO_cf0c8d3e.png
+          node -e "
+            const fs = require('fs');
+            const p = 'src-tauri/tauri.conf.json';
+            const cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
+            cfg.bundle.icon = [
+              'icons/32x32.png',
+              'icons/128x128.png',
+              'icons/128x128@2x.png',
+              'icons/icon.icns',
+              'icons/icon.ico'
+            ];
+            fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
+          "
+
+      - name: Zbuduj instalator Windows (.exe / .msi)
+        run: npx --yes @tauri-apps/cli@^2 build
+
+      - name: Wyślij gotowy instalator SHL PRO jako plik do pobrania
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHL-PRO-Windows-Installer
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error
+          retention-days: 90

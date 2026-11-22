@@ -1,0 +1,6 @@
+{
+  "name": "TerenKoszt — Kosztorysant Robót Ziemnych i Rozbiórek",
+  "description": "Profesjonalny kalkulator i system kosztorysowy dla branży robót ziemnych oraz wyburzeń w woj. dolnośląskim, oparty na wielu bazach rynkowych, analizie dokumentacji technicznej i generatorze ofert PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
